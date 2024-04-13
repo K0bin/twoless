@@ -75,6 +75,7 @@ impl SATClause {
     }
 }
 
+#[repr(packed)]
 pub struct SATLiteral {
     triplet_index_packed: u16,
     triplet_index_in_sequence: u8
