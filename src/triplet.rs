@@ -71,6 +71,8 @@ impl TripletSequence {
     }
 
     pub fn generate_sat(&self) -> SAT {
+        let mut memory_estimate = 0usize;
+        let mut literal_count = 0usize;
         let mut sat_clauses = Vec::<SATClause>::new();
 
         for r in 1..=self.k as i64 {
@@ -78,6 +80,9 @@ impl TripletSequence {
             for i in 1..self.set.max_index() {
                 sat_literals.push(SATLiteral::new(i as u16, r as u8, false));
             }
+            memory_estimate += std::mem::size_of::<SATLiteral>() * sat_literals.len();
+            literal_count += sat_literals.len();
+
             sat_clauses.push(SATClause::new(sat_literals));
         }
 
@@ -87,6 +92,10 @@ impl TripletSequence {
                     let mut sat_literals = Vec::<SATLiteral>::new();
                     sat_literals.push(SATLiteral::new(i as u16, r as u8, true));
                     sat_literals.push(SATLiteral::new(i as u16, s as u8, true));
+
+                    memory_estimate += std::mem::size_of::<SATLiteral>() * sat_literals.len();
+                    literal_count += sat_literals.len();
+
                     sat_clauses.push(SATClause::new(sat_literals));
                 }
             }
@@ -103,11 +112,18 @@ impl TripletSequence {
                         let mut sat_literals = Vec::<SATLiteral>::new();
                         sat_literals.push(SATLiteral::new(i as u16, r as u8, true));
                         sat_literals.push(SATLiteral::new(j as u16, s as u8, true));
+
+                        memory_estimate += std::mem::size_of::<SATLiteral>() * sat_literals.len();
+                        literal_count += sat_literals.len();
+
                         sat_clauses.push(SATClause::new(sat_literals));
                     }
                 }
             }
         }
+
+        memory_estimate += std::mem::size_of::<SATClause>() * sat_clauses.len();
+        println!("Memory estimate: {} MB, {} clauses, {} literals", memory_estimate >> 20, sat_clauses.len(), literal_count);
 
         SAT::new(sat_clauses, self.set.clone(), self.k as u8)
     }
